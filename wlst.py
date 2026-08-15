@@ -3,7 +3,6 @@ import os
 import sys
 import argparse
 from typing import NamedTuple
-from time import sleep
 
 
 class Token(NamedTuple):
@@ -51,11 +50,7 @@ def main() -> None:
     )
 
     parser.add_argument(
-        "-f",
-        "--file",
-        type=str,
-        required=True,
-        help="Path to the input .wlst file"
+        "-f", "--file", type=str, required=True, help="Path to the input .wlst file"
     )
 
     parser.add_argument(
@@ -68,17 +63,27 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    inputPath = args.file
+    if not os.path.isfile(inputPath):
+        print(f"Error: Input file '{inputPath}' not found.", file=sys.stderr)
+        sys.exit(1)
     
-    if not os.path.isfile(args.file):
-        print(f"Error: Input file '{args.file}' not found.", file=sys.stderr)
+    outputPath = args.output
+    if not outputPath:
+        baseName, _ = os.path.splitext(args.file)
+        outputPath = f"{baseName}.py"
+    
+    try:
+        with open(inputPath, "r") as file:
+            fileData: str = file.read()
+        with open(outputPath, "w") as file:
+            file.write(parse(lex(fileData)))
+    except SyntaxError as err:
+        print(err, file=sys.stderr)
         sys.exit(1)
 
-    with open(args.file, "r") as file:
-        fileData: str = file.read()
-    with open(args.output, "w") as file:
-        file.write(parse(lex(fileData)))
-    
-    print(f"Transpiled successfully: '{args.file}' -> '{args.output}'")
+    print(f"Transpiled successfully: '{inputPath}' -> '{outputPath}'")
 
 
 def lex(fileData: str) -> list[str]:
