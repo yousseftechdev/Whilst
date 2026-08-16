@@ -26,6 +26,7 @@ TOKENS: list[tuple[str, str]] = [
     ("OP", r"not|==|!=|<=|>=|\+|\-|\*|/|<|>|\-=|\+=|/=|\*="),
     ("NOT", r"!"),
     ("COMMA", r","),
+    ("HASH", r"#"),
     ("LEFTPARENC", r"\{"),
     ("LEFTPARENS", r"\["),
     ("LEFTPAREN", r"\("),
