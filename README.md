@@ -5,9 +5,9 @@ Have you ever felt like programming languages nowadays give you too many feature
 Whilst is a functional, yet impractical programming language that relies on while loops ONLY. Devs' greed for convenience blinded them of the bloat they use of their day-to-day programming, for loops, if statements, match cases, and normal one-shot functions are all just propaganda designed to fool you, in reality all you need to program a functional app are while loops!
 
 ## Philosophy
-- Turing complete: Any control flow can be expressed through while loops alone (Example: an `if` statement is just a `while` loop that exits on the first iteration)
-- "Greed of convenience": Keywords like `if`, `else`, `for`, `def`, and `match`, are strictly forbidden and will trigger the compiler (technically a transpiler but who cares) to panic and quit
-- Infinite superloop: In **Whilst**, execution never ends (non-terminating), the Whilst (superloop) keeps running forever and the dev has to structure their logic accordingly
+- Turing complete: Any control flow can be expressed through while loops alone (Example: an `if` statement is just a `while` loop that exits on the first iteration).
+- "Greed of convenience": Keywords like `if`, `else`, `for`, `def`, and `match`, are strictly forbidden and will trigger the compiler (technically a transpiler but who cares) to panic and quit, unless you use them as identifiers instead of control-flow keywords.
+- Infinite superloop: In **Whilst**, execution never ends (non-terminating), the Whilst (superloop) keeps running forever and the dev has to structure their logic accordingly.
 
 ## Features
 - **Whilst loops:** Infinite loops.

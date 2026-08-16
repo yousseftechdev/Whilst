@@ -1,4 +1,5 @@
 import argparse
+import keyword
 import os
 import re
 import sys
@@ -12,7 +13,6 @@ class Token(NamedTuple):
 
 
 TOKENS: list[tuple[str, str]] = [
-    ("FORBIDDEN", r"\b(if|for|def|else|match|case)\b"),
     ("WHILSTF", r"\bwhilstf\b"),
     ("WHILST", r"\bwhilst\b"),
     ("WHILE", r"\bwhile\b"),
@@ -23,10 +23,8 @@ TOKENS: list[tuple[str, str]] = [
     ("STRING", r'"[^"]*"'),
     ("IDENT", r"\b[a-zA-Z_][a-zA-Z0-9_]*\b"),
     ("ASSIGN", r"="),
-    ("OP", r"not|==|!=|<=|>=|\+|\-|\*|/|<|>|\-=|\+=|/=|\*="),
-    ("NOT", r"!"),
+    ("OP", r"==|!=|<=|>=|\+|\-|\*|/|<|>"),
     ("COMMA", r","),
-    ("HASH", r"#"),
     ("LEFTPARENC", r"\{"),
     ("LEFTPARENS", r"\["),
     ("LEFTPAREN", r"\("),
@@ -45,6 +43,13 @@ MATCH_ENGINE = re.compile(
 )
 
 TICK_DELAY: float = 0.05
+FORBIDDEN_KEYWORDS = {"if", "for", "def", "else", "match", "case"}
+
+
+def sanitizeIdent(val: str) -> str:
+    if keyword.iskeyword(val):
+        return f"w_{val}"
+    return val
 
 
 def main() -> None:
@@ -105,13 +110,7 @@ def lex(fileData: str) -> list[Token]:
         kind: str = match.lastgroup
         value: str = match.group()
 
-        if kind == "FORBIDDEN":
-            raise SyntaxError(
-                f"\n[LINE {lineNumber}] WHILST ERROR: 'Greed of Convenience' Detected!\n"
-                f"--> You tried using '{value}'. '{value}' does not exist here.\n"
-                f"--> There are no shortcuts. EVERY control flow must be a 'whilst' loop!"
-            )
-        elif kind == "NEWLINE":
+        if kind == "NEWLINE":
             lineNumber += 1
             continue
         elif kind == "SKIP":
@@ -153,9 +152,18 @@ def parse(tokenized: list[Token]) -> str:
     while i < n:
         tok = tokenized[i]
 
+        if tok.type == "IDENT" and tok.value in FORBIDDEN_KEYWORDS:
+            if i + 1 < n and tokenized[i + 1].type in ("LEFTPAREN", "LEFTPARENC"):
+                raise SyntaxError(
+                    f"\n[LINE {tok.line}] WHILST ERROR: 'Greed of Convenience' Detected!\n"
+                    f"--> You tried using '{tok.value}' as a control flow statement.\n"
+                    f"--> There are no shortcuts. EVERY control flow must be a 'whilst' loop!"
+                )
+
         if tok.type == "WHILSTF":
             i += 1
-            funcName = tokenized[i].value
+            rawFuncName = tokenized[i].value
+            funcName = sanitizeIdent(rawFuncName)
             i += 2
 
             parenDepth = 1
@@ -180,23 +188,29 @@ def parse(tokenized: list[Token]) -> str:
             paramGroups = argGroups[1:] if len(argGroups) > 1 else []
 
             condStr = "".join(
-                f" {t.value} " if t.type in ("OP", "ASSIGN") else t.value
+                f" {t.value} " if t.type in ("OP", "ASSIGN")
+                else sanitizeIdent(t.value) if t.type == "IDENT"
+                else t.value
                 for t in condTokens
             ).strip()
             if not condStr:
                 condStr = "True"
 
-            # Extract parameters: include identifiers in condition + extra param groups
             paramsList: list[str] = []
             paramSet: set[str] = set()
 
             for t in condTokens:
-                if t.type == "IDENT" and t.value not in paramSet and t.value not in ("True", "False"):
-                    paramsList.append(t.value)
-                    paramSet.add(t.value)
+                if t.type == "IDENT" and t.value not in ("True", "False"):
+                    sanitizedVal = sanitizeIdent(t.value)
+                    if sanitizedVal not in paramSet:
+                        paramsList.append(sanitizedVal)
+                        paramSet.add(sanitizedVal)
 
             for pg in paramGroups:
-                pStr = "".join(t.value for t in pg).strip()
+                pStr = "".join(
+                    sanitizeIdent(t.value) if t.type == "IDENT" else t.value
+                    for t in pg
+                ).strip()
                 if pStr and pStr not in paramSet:
                     paramsList.append(pStr)
                     paramSet.add(pStr)
@@ -215,7 +229,6 @@ def parse(tokenized: list[Token]) -> str:
             continue
 
         elif tok.type in ("WHILST", "WHILE"):
-            # Check if next token is '{' (conditionless infinite whilst loop)
             if i + 1 < n and tokenized[i + 1].type == "LEFTPARENC":
                 emit("while True")
             else:
@@ -251,6 +264,10 @@ def parse(tokenized: list[Token]) -> str:
 
         elif tok.type == "SLEEP":
             emit("time.sleep")
+            i += 1
+
+        elif tok.type == "IDENT":
+            emit(sanitizeIdent(tok.value))
             i += 1
 
         elif tok.type in ("OP", "ASSIGN"):
