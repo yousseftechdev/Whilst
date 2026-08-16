@@ -1,6 +1,8 @@
 # **Whilst**
 Have you ever felt like programming languages nowadays give you too many features? Well I certainly did.
 
+![Screenshot](imgs/image.png)
+
 ## Description
 Whilst is a functional, yet impractical programming language that relies on while loops ONLY. Devs' greed for convenience blinded them of the bloat they use of their day-to-day programming, for loops, if statements, match cases, and normal one-shot functions are all just propaganda designed to fool you, in reality all you need to program a functional app are while loops!
 
