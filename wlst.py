@@ -23,7 +23,8 @@ TOKENS: list[tuple[str, str]] = [
     ("STRING", r'"[^"]*"'),
     ("IDENT", r"\b[a-zA-Z_][a-zA-Z0-9_]*\b"),
     ("ASSIGN", r"="),
-    ("OP", r"==|!=|<=|>=|\+|\-|\*|/|<|>"),
+    ("OP", r"not|==|!=|<=|>=|\+|\-|\*|/|<|>|\-=|\+=|/=|\*="),
+    ("NOT", r"!"),
     ("COMMA", r","),
     ("LEFTPARENC", r"\{"),
     ("LEFTPARENS", r"\["),
@@ -174,8 +175,8 @@ def parse(tokenized: list[Token]) -> str:
                     argGroups[-1].append(t)
                 i += 1
 
-            condTokens = argGroups[0]
-            paramGroups = argGroups[1:]
+            condTokens = argGroups[0] if argGroups else []
+            paramGroups = argGroups[1:] if len(argGroups) > 1 else []
 
             condStr = "".join(
                 f" {t.value} " if t.type in ("OP", "ASSIGN") else t.value
@@ -184,11 +185,21 @@ def parse(tokenized: list[Token]) -> str:
             if not condStr:
                 condStr = "True"
 
-            paramsList = [
-                "".join(t.value for t in pg).strip()
-                for pg in paramGroups
-                if pg
-            ]
+            # Extract parameters: include identifiers in condition + extra param groups
+            paramsList: list[str] = []
+            paramSet: set[str] = set()
+
+            for t in condTokens:
+                if t.type == "IDENT" and t.value not in paramSet and t.value not in ("True", "False"):
+                    paramsList.append(t.value)
+                    paramSet.add(t.value)
+
+            for pg in paramGroups:
+                pStr = "".join(t.value for t in pg).strip()
+                if pStr and pStr not in paramSet:
+                    paramsList.append(pStr)
+                    paramSet.add(pStr)
+
             paramsStr = ", ".join(paramsList)
 
             if i < n and tokenized[i].type == "LEFTPARENC":
@@ -203,7 +214,11 @@ def parse(tokenized: list[Token]) -> str:
             continue
 
         elif tok.type in ("WHILST", "WHILE"):
-            emit("while ")
+            # Check if next token is '{' (conditionless infinite whilst loop)
+            if i + 1 < n and tokenized[i + 1].type == "LEFTPARENC":
+                emit("while True")
+            else:
+                emit("while ")
             i += 1
 
         elif tok.type == "LEFTPARENC":
