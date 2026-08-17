@@ -1,0 +1,24 @@
+whilstf alert(active, status) {
+    print("ALERT:", status);
+    active = 0;
+}
+
+whilst {
+    temperature = 75;
+
+    is_hot = (temperature > 70);
+    whilst (is_hot) {
+        flag = 1;
+        alert(flag, "Temperature threshold exceeded!");
+        is_hot = 0;
+    }
+
+    is_normal = (temperature <= 70);
+    whilst (is_normal) {
+        print("Temperature within normal parameters.");
+        is_normal = 0;
+    }
+
+    print("Monitoring cycle complete.\n");
+    sleep(1);
+}

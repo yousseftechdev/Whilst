@@ -1,7 +1,0 @@
-whilst {
-    for = 1;
-    while (for <= 10) {
-        print(for);
-        for = for + 1;
-    }
-}

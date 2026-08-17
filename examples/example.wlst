@@ -1,0 +1,8 @@
+whilst {
+    userinput = input("Enter a number to count to: ");
+    i = 1;
+    while (i <= int(userinput)) {
+        print(i);
+        i += 1;
+    }
+}
